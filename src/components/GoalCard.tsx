@@ -10,6 +10,11 @@ function monthsRemaining(targetDate: string): number {
   return Math.max(0, diff);
 }
 
+// ✅ Affichage sans centimes
+function formatEur(amount: number): string {
+  return amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+}
+
 interface GoalCardProps {
   goal: Goal;
 }
@@ -29,8 +34,9 @@ export default function GoalCard({ goal }: GoalCardProps) {
           <h3 className="text-white font-semibold text-sm group-hover:text-[#4d9eff] transition-colors">
             {goal.name}
           </h3>
+          {/* ✅ CORRIGÉ */}
           <p className="text-gray-500 text-xs mt-0.5">
-            {goal.target_amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })} visés
+            {formatEur(goal.target_amount)} visés
           </p>
         </div>
         <span
@@ -49,9 +55,10 @@ export default function GoalCard({ goal }: GoalCardProps) {
       <ProgressBar current={goal.current_amount} target={goal.target_amount} className="mb-4" />
 
       <div className="flex items-center gap-4 text-xs text-gray-500">
+        {/* ✅ CORRIGÉ */}
         <span className="flex items-center gap-1">
           <TrendingUp size={11} className="text-[#4d9eff]" />
-          {goal.monthly_amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}/mois
+          {formatEur(goal.monthly_amount)}/mois
         </span>
         <span className="flex items-center gap-1">
           <Calendar size={11} />

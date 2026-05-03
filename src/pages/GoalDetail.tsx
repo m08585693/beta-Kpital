@@ -7,6 +7,11 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Goal, Payment } from '../lib/database.types';
 
+// ✅ Affichage sans centimes
+function formatEur(amount: number): string {
+  return amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+}
+
 function monthlyProgress(payments: Payment[]): number {
   const now = new Date();
   return payments
@@ -155,21 +160,18 @@ export default function GoalDetail() {
           <div className="grid grid-cols-3 gap-3">
             <div>
               <p className="text-xs text-gray-500 mb-0.5">Épargné</p>
-              <p className="text-white font-semibold text-sm">
-                {goal.current_amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
-              </p>
+              {/* ✅ CORRIGÉ */}
+              <p className="text-white font-semibold text-sm">{formatEur(goal.current_amount)}</p>
             </div>
             <div>
               <p className="text-xs text-gray-500 mb-0.5">Objectif</p>
-              <p className="text-white font-semibold text-sm">
-                {goal.target_amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
-              </p>
+              {/* ✅ CORRIGÉ */}
+              <p className="text-white font-semibold text-sm">{formatEur(goal.target_amount)}</p>
             </div>
             <div>
               <p className="text-xs text-gray-500 mb-0.5">Restant</p>
-              <p className="text-white font-semibold text-sm">
-                {remaining.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
-              </p>
+              {/* ✅ CORRIGÉ */}
+              <p className="text-white font-semibold text-sm">{formatEur(remaining)}</p>
             </div>
           </div>
         </div>
@@ -181,12 +183,9 @@ export default function GoalDetail() {
               <TrendingUp size={11} className="text-[#4d9eff]" />
               <span className="text-xs text-gray-500">Ce mois-ci</span>
             </div>
-            <p className="text-white font-semibold text-sm">
-              {thisMonth.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
-            </p>
-            <p className="text-xs text-gray-600 mt-0.5">
-              sur {goal.monthly_amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })} prévus
-            </p>
+            {/* ✅ CORRIGÉ */}
+            <p className="text-white font-semibold text-sm">{formatEur(thisMonth)}</p>
+            <p className="text-xs text-gray-600 mt-0.5">sur {formatEur(goal.monthly_amount)} prévus</p>
           </div>
           <div className="bg-[#0d1117] border border-[#1c2230] rounded-xl p-4">
             <div className="flex items-center gap-1.5 mb-2">
@@ -207,9 +206,8 @@ export default function GoalDetail() {
           <div className="bg-[#4d9eff]/5 border border-[#4d9eff]/15 rounded-xl px-4 py-3 mb-4">
             <p className="text-xs text-gray-400">
               Il vous reste{' '}
-              <span className="text-[#4d9eff] font-semibold">
-                {monthRemaining.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
-              </span>{' '}
+              {/* ✅ CORRIGÉ */}
+              <span className="text-[#4d9eff] font-semibold">{formatEur(monthRemaining)}</span>{' '}
               à verser ce mois pour atteindre votre mensualité.
             </p>
           </div>
@@ -235,9 +233,9 @@ export default function GoalDetail() {
                   value={addAmount}
                   onChange={(e) => setAddAmount(e.target.value)}
                   required
-                  min="0.01"
-                  step="0.01"
-                  placeholder={monthRemaining > 0 ? monthRemaining.toFixed(2) : '50'}
+                  min="1"
+                  step="1"
+                  placeholder={monthRemaining > 0 ? String(Math.round(monthRemaining)) : '50'}
                   className="w-full bg-[#1c2230] border border-[#2a3347] rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#4d9eff]/60 transition-colors"
                 />
               </div>
@@ -291,9 +289,8 @@ export default function GoalDetail() {
                     <div className="flex items-center gap-3">
                       <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isThisMonth ? 'bg-[#4d9eff]' : 'bg-gray-600'}`} />
                       <div>
-                        <p className="text-white text-xs font-medium">
-                          {payment.amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
-                        </p>
+                        {/* ✅ CORRIGÉ */}
+                        <p className="text-white text-xs font-medium">{formatEur(payment.amount)}</p>
                         {payment.note && <p className="text-gray-500 text-xs">{payment.note}</p>}
                       </div>
                     </div>
