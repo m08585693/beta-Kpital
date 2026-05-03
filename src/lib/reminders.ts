@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import type { Goal } from './database.types';
 
+// Génère des jours aléatoires répartis sur le mois
 function generateRandomDays(count: number): number[] {
   const days: number[] = [];
   const segments = Array.from({ length: count }, (_, i) => ({
@@ -14,11 +15,47 @@ function generateRandomDays(count: number): number[] {
   return days;
 }
 
+// Génère des montants ronds entre 10 et 20€ qui s'additionnent exactement au total
+function generateRoundAmounts(total: number): number[] {
+  // Calcule le nombre de rappels nécessaires (entre 10 et 20€ chacun)
+  const count = Math.round(total / 15); // 15€ = milieu de la fourchette
+  const safeCount = Math.max(count, 1);
+
+  const amounts: number[] = [];
+  let remaining = Math.round(total); // Arrondit le total
+
+  for (let i = 0; i < safeCount - 1; i++) {
+    // Calcule une borne max pour ne pas dépasser le restant
+    const maxForThis = Math.min(20, remaining - 10 * (safeCount - i - 1));
+    const minForThis = Math.max(10, remaining - 20 * (safeCount - i - 1));
+
+    if (minForThis > maxForThis) {
+      // Sécurité : si les bornes ne sont pas valides, on met ce qui reste
+      amounts.push(remaining);
+      return amounts;
+    }
+
+    // Montant aléatoire rond entre minForThis et maxForThis
+    const range = maxForThis - minForThis;
+    const amount = minForThis + Math.round(Math.random() * range);
+    amounts.push(amount);
+    remaining -= amount;
+  }
+
+  // Le dernier montant = ce qui reste (toujours rond)
+  if (remaining > 0) {
+    amounts.push(remaining);
+  }
+
+  return amounts;
+}
+
 export async function generateMonthlyReminders(goal: Goal, userId: string) {
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
 
+  // Vérifie si les rappels du mois existent déjà
   const { data: existing } = await supabase
     .from('reminders')
     .select('id')
@@ -28,16 +65,17 @@ export async function generateMonthlyReminders(goal: Goal, userId: string) {
 
   if (existing && existing.length > 0) return;
 
-  const days = generateRandomDays(3);
-  const amountPerReminder = goal.monthly_amount / 3;
+  // Génère les montants ronds
+  const amounts = generateRoundAmounts(goal.monthly_amount);
+  const days = generateRandomDays(amounts.length);
 
-  const inserts = days.map((day) => ({
+  const inserts = amounts.map((amount, i) => ({
     goal_id: goal.id,
     user_id: userId,
-    scheduled_day: day,
+    scheduled_day: days[i],
     month,
     year,
-    amount_suggested: Math.ceil(amountPerReminder * 100) / 100,
+    amount_suggested: amount, // Toujours un nombre rond, sans centimes
     is_sent: false,
   }));
 
