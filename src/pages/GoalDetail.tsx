@@ -89,8 +89,14 @@ function AnimatedText({ text, className }: { text: string; className?: string })
   return <span className={className}>{displayed}</span>;
 }
 
-// Partenaires — à remplacer par vos vrais partenaires
+// Partenaires
 const PARTNERS = [
+  {
+    name: 'Skippair',
+    desc: 'Croisière voilier ou catamaran — embarquez avec un skipper pro !',
+    emoji: '⛵',
+    url: 'https://skippair.com/fr/',
+  },
   { name: 'Voyage Privé', desc: '-15% sur votre prochain voyage', emoji: '✈️', url: '#' },
   { name: 'AutoDiscount', desc: 'Remise exclusive sur véhicules neufs', emoji: '🚗', url: '#' },
   { name: 'Sumeria Bank', desc: 'Compte rémunéré à 2% offert', emoji: '🏦', url: '#' },
@@ -378,7 +384,11 @@ export default function GoalDetail() {
                 </p>
                 <div className="flex flex-col gap-3">
                   {PARTNERS.map((p) => (
-                    <a key={p.name} href={p.url}
+                    <a
+                      key={p.name}
+                      href={p.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="flex items-center gap-4 bg-[#111827] border border-[#1c2230] hover:border-[#4d9eff]/40 rounded-xl p-4 transition-all group"
                     >
                       <div className="w-10 h-10 bg-[#0d2040] border border-[#1a3a6a] rounded-xl flex items-center justify-center text-xl flex-shrink-0">
