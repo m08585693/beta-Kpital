@@ -5,12 +5,18 @@ import Layout from '../components/Layout';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
+// ✅ CORRIGÉ : montant arrondi à l'euro le plus proche, sans centimes
 function calcMonthlyAmount(target: number, targetDate: string): number {
   if (!target || !targetDate) return 0;
   const now = new Date();
   const end = new Date(targetDate);
   const months = Math.max(1, (end.getFullYear() - now.getFullYear()) * 12 + (end.getMonth() - now.getMonth()));
-  return Math.ceil((target / months) * 100) / 100;
+  return Math.round(target / months); // Arrondi à l'euro, zéro centimes
+}
+
+// ✅ Affichage sans centimes
+function formatEur(amount: number): string {
+  return amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 }
 
 const projectSuggestions = [
@@ -134,8 +140,9 @@ export default function CreateGoal() {
                 <span className="text-xs text-[#4d9eff] font-medium">Mensualité calculée</span>
               </div>
               <div className="flex items-baseline gap-1">
+                {/* ✅ CORRIGÉ : affichage sans centimes */}
                 <span className="text-2xl font-bold text-white">
-                  {monthly.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+                  {formatEur(monthly)}
                 </span>
                 <span className="text-xs text-gray-500">/ mois</span>
               </div>
