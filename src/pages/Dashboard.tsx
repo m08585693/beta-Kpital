@@ -14,6 +14,11 @@ interface ReminderWithGoal {
   goal: Goal | undefined;
 }
 
+// ✅ Affichage sans centimes
+function formatEur(amount: number): string {
+  return amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -101,8 +106,9 @@ export default function Dashboard() {
               <Wallet size={12} className="text-[#4d9eff]" />
               <span className="text-xs text-gray-500">Total épargné</span>
             </div>
+            {/* ✅ CORRIGÉ : sans centimes */}
             <p className="text-white font-bold text-sm">
-              {totalSaved.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+              {formatEur(totalSaved)}
             </p>
           </div>
           <div className="bg-[#0d1117] border border-[#1c2230] rounded-xl p-4">
@@ -110,8 +116,9 @@ export default function Dashboard() {
               <Target size={12} className="text-[#4d9eff]" />
               <span className="text-xs text-gray-500">Objectif total</span>
             </div>
+            {/* ✅ CORRIGÉ : sans centimes */}
             <p className="text-white font-bold text-sm">
-              {totalTarget.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' })}
+              {formatEur(totalTarget)}
             </p>
           </div>
           <div className="bg-[#0d1117] border border-[#1c2230] rounded-xl p-4">
