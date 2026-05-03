@@ -4,17 +4,16 @@ import { ArrowLeft, Calculator } from 'lucide-react';
 import Layout from '../components/Layout';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { generateWelcomeReminder } from '../lib/reminders';
 
-// ✅ CORRIGÉ : montant arrondi à l'euro le plus proche, sans centimes
 function calcMonthlyAmount(target: number, targetDate: string): number {
   if (!target || !targetDate) return 0;
   const now = new Date();
   const end = new Date(targetDate);
   const months = Math.max(1, (end.getFullYear() - now.getFullYear()) * 12 + (end.getMonth() - now.getMonth()));
-  return Math.round(target / months); // Arrondi à l'euro, zéro centimes
+  return Math.round(target / months);
 }
 
-// ✅ Affichage sans centimes
 function formatEur(amount: number): string {
   return amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 }
@@ -34,7 +33,6 @@ export default function CreateGoal() {
   const [error, setError] = useState('');
 
   const monthly = calcMonthlyAmount(Number(targetAmount), targetDate);
-
   const now = new Date();
   const minDate = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().split('T')[0];
 
@@ -44,20 +42,22 @@ export default function CreateGoal() {
     setError('');
     setLoading(true);
 
-    const { error } = await supabase.from('goals').insert({
+    const { data, error } = await supabase.from('goals').insert({
       user_id: user.id,
       name,
       target_amount: Number(targetAmount),
       target_date: targetDate,
       monthly_amount: monthly,
       current_amount: 0,
-    });
+    }).select().single();
 
     setLoading(false);
 
-    if (error) {
+    if (error || !data) {
       setError('Une erreur est survenue. Réessayez.');
     } else {
+      // ✅ Notification de bienvenue immédiate dès la création
+      await generateWelcomeReminder(data, user.id);
       navigate('/dashboard');
     }
   };
@@ -79,60 +79,44 @@ export default function CreateGoal() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name */}
           <div>
             <label className="block text-xs text-gray-400 mb-1.5">Nom du projet</label>
             <input
-              type="text"
-              value={name}
+              type="text" value={name}
               onChange={(e) => setName(e.target.value)}
-              required
-              placeholder="Ex: Voyage au Japon"
+              required placeholder="Ex: Voyage au Japon"
               className="w-full bg-[#0d1117] border border-[#1c2230] rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#4d9eff]/60 transition-colors"
             />
             <div className="flex flex-wrap gap-1.5 mt-2">
               {projectSuggestions.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setName(s)}
-                  className="text-xs bg-[#1c2230] hover:bg-[#2a3347] text-gray-400 hover:text-white px-2 py-0.5 rounded-md transition-colors"
-                >
+                <button key={s} type="button" onClick={() => setName(s)}
+                  className="text-xs bg-[#1c2230] hover:bg-[#2a3347] text-gray-400 hover:text-white px-2 py-0.5 rounded-md transition-colors">
                   {s}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Amount */}
           <div>
             <label className="block text-xs text-gray-400 mb-1.5">Montant cible (€)</label>
             <input
-              type="number"
-              value={targetAmount}
+              type="number" value={targetAmount}
               onChange={(e) => setTargetAmount(e.target.value)}
-              required
-              min="1"
-              step="1"
-              placeholder="3 000"
+              required min="1" step="1" placeholder="3 000"
               className="w-full bg-[#0d1117] border border-[#1c2230] rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#4d9eff]/60 transition-colors"
             />
           </div>
 
-          {/* Date */}
           <div>
             <label className="block text-xs text-gray-400 mb-1.5">Date souhaitée</label>
             <input
-              type="date"
-              value={targetDate}
+              type="date" value={targetDate}
               onChange={(e) => setTargetDate(e.target.value)}
-              required
-              min={minDate}
+              required min={minDate}
               className="w-full bg-[#0d1117] border border-[#1c2230] rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#4d9eff]/60 transition-colors [color-scheme:dark]"
             />
           </div>
 
-          {/* Monthly preview */}
           {monthly > 0 && (
             <div className="bg-[#4d9eff]/5 border border-[#4d9eff]/20 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-2">
@@ -140,10 +124,7 @@ export default function CreateGoal() {
                 <span className="text-xs text-[#4d9eff] font-medium">Mensualité calculée</span>
               </div>
               <div className="flex items-baseline gap-1">
-                {/* ✅ CORRIGÉ : affichage sans centimes */}
-                <span className="text-2xl font-bold text-white">
-                  {formatEur(monthly)}
-                </span>
+                <span className="text-2xl font-bold text-white">{formatEur(monthly)}</span>
                 <span className="text-xs text-gray-500">/ mois</span>
               </div>
               <p className="text-xs text-gray-500 mt-1">
