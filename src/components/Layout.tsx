@@ -1,5 +1,5 @@
-import { useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, PlusCircle } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { LogOut, LayoutDashboard, PlusCircle, Handshake } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import type { ReactNode } from 'react';
 
@@ -10,6 +10,7 @@ interface LayoutProps {
 export default function Layout({ children }: LayoutProps) {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleSignOut = async () => {
     await signOut();
@@ -29,10 +30,25 @@ export default function Layout({ children }: LayoutProps) {
           <nav className="flex items-center gap-2">
             <button
               onClick={() => navigate('/dashboard')}
-              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-white transition-colors px-3 py-1.5 rounded-lg hover:bg-[#1c2230]"
+              className={`flex items-center gap-1.5 text-xs transition-colors px-3 py-1.5 rounded-lg ${
+                location.pathname === '/dashboard'
+                  ? 'text-[#4d9eff] bg-[#4d9eff]/10'
+                  : 'text-gray-400 hover:text-white hover:bg-[#1c2230]'
+              }`}
             >
               <LayoutDashboard size={13} />
               <span className="hidden sm:inline">Tableau de bord</span>
+            </button>
+            <button
+              onClick={() => navigate('/partners')}
+              className={`flex items-center gap-1.5 text-xs transition-colors px-3 py-1.5 rounded-lg ${
+                location.pathname === '/partners'
+                  ? 'text-[#4d9eff] bg-[#4d9eff]/10'
+                  : 'text-gray-400 hover:text-white hover:bg-[#1c2230]'
+              }`}
+            >
+              <Handshake size={13} />
+              <span className="hidden sm:inline">Nos partenaires</span>
             </button>
             <button
               onClick={() => navigate('/goals/new')}
