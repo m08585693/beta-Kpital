@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { PlusCircle, TrendingUp, Target, Wallet } from 'lucide-react';
 import Layout from '../components/Layout';
 import GoalCard from '../components/GoalCard';
@@ -14,7 +14,6 @@ interface ReminderWithGoal {
   goal: Goal | undefined;
 }
 
-// ✅ Affichage sans centimes
 function formatEur(amount: number): string {
   return amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
 }
@@ -22,6 +21,7 @@ function formatEur(amount: number): string {
 export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [reminders, setReminders] = useState<ReminderWithGoal[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,20 +34,16 @@ export default function Dashboard() {
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
-
     const { data } = await supabase
       .from('goals')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
-
     const goalList = data ?? [];
     setGoals(goalList);
-
     for (const goal of goalList) {
       await generateMonthlyReminders(goal, user.id);
     }
-
     const todayReminders = await getTodayReminders(user.id, goalList);
     setReminders(todayReminders);
     setLoading(false);
@@ -73,7 +69,6 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      {/* Reminder banners */}
       {reminders.map(({ reminder, goal }) => (
         <ReminderBanner
           key={reminder.id}
@@ -83,11 +78,29 @@ export default function Dashboard() {
         />
       ))}
 
-      {/* Header */}
-      <div className="flex items-end justify-between mb-6">
-        <div>
-          <p className="text-xs text-gray-500 mb-0.5">Bonjour</p>
-          <h1 className="text-xl font-bold text-white">Mes objectifs</h1>
+      {/* Navigation onglets */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-1 bg-[#0d1117] border border-[#1c2230] rounded-xl p-1">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className={`text-xs px-4 py-2 rounded-lg transition-colors font-medium ${
+              location.pathname === '/dashboard'
+                ? 'bg-[#4d9eff]/10 text-[#4d9eff]'
+                : 'text-gray-500 hover:text-white'
+            }`}
+          >
+            Tableau de bord
+          </button>
+          <button
+            onClick={() => navigate('/partners')}
+            className={`text-xs px-4 py-2 rounded-lg transition-colors font-medium ${
+              location.pathname === '/partners'
+                ? 'bg-[#4d9eff]/10 text-[#4d9eff]'
+                : 'text-gray-500 hover:text-white'
+            }`}
+          >
+            Partenaires
+          </button>
         </div>
         <button
           onClick={() => navigate('/goals/new')}
@@ -98,6 +111,12 @@ export default function Dashboard() {
         </button>
       </div>
 
+      {/* Header */}
+      <div className="mb-6">
+        <p className="text-xs text-gray-500 mb-0.5">Bonjour</p>
+        <h1 className="text-xl font-bold text-white">Mes objectifs</h1>
+      </div>
+
       {/* Stats */}
       {goals.length > 0 && (
         <div className="grid grid-cols-3 gap-3 mb-6">
@@ -106,20 +125,14 @@ export default function Dashboard() {
               <Wallet size={12} className="text-[#4d9eff]" />
               <span className="text-xs text-gray-500">Total épargné</span>
             </div>
-            {/* ✅ CORRIGÉ : sans centimes */}
-            <p className="text-white font-bold text-sm">
-              {formatEur(totalSaved)}
-            </p>
+            <p className="text-white font-bold text-sm">{formatEur(totalSaved)}</p>
           </div>
           <div className="bg-[#0d1117] border border-[#1c2230] rounded-xl p-4">
             <div className="flex items-center gap-1.5 mb-2">
               <Target size={12} className="text-[#4d9eff]" />
               <span className="text-xs text-gray-500">Objectif total</span>
             </div>
-            {/* ✅ CORRIGÉ : sans centimes */}
-            <p className="text-white font-bold text-sm">
-              {formatEur(totalTarget)}
-            </p>
+            <p className="text-white font-bold text-sm">{formatEur(totalTarget)}</p>
           </div>
           <div className="bg-[#0d1117] border border-[#1c2230] rounded-xl p-4">
             <div className="flex items-center gap-1.5 mb-2">
