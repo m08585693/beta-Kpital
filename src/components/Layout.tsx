@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, LayoutDashboard, PlusCircle, Handshake } from 'lucide-react';
+import { LogOut, LayoutDashboard, PlusCircle, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import type { ReactNode } from 'react';
 
@@ -47,7 +47,7 @@ export default function Layout({ children }: LayoutProps) {
                   : 'text-gray-400 hover:text-white hover:bg-[#1c2230]'
               }`}
             >
-              <Handshake size={13} />
+              <Users size={13} />
               <span className="hidden sm:inline">Nos partenaires</span>
             </button>
             <button
