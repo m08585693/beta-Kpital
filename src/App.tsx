@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import CreateGoal from './pages/CreateGoal';
 import GoalDetail from './pages/GoalDetail';
 import Partners from './pages/Partners';
+import Invitations from './pages/Invitations';
 import type { ReactNode } from 'react';
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -39,6 +40,7 @@ function AppRoutes() {
       <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/partners" element={<ProtectedRoute><Partners /></ProtectedRoute>} />
+      <Route path="/invitations" element={<ProtectedRoute><Invitations /></ProtectedRoute>} />
       <Route path="/goals/new" element={<ProtectedRoute><CreateGoal /></ProtectedRoute>} />
       <Route path="/goals/:id" element={<ProtectedRoute><GoalDetail /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
