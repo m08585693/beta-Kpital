@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Clock, TrendingUp, ExternalLink, Users, UserPlus, X, Check } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Clock, TrendingUp, ExternalLink, Users, UserPlus, X, Check, CalendarDays } from 'lucide-react';
 import Layout from '../components/Layout';
 import ProgressBar from '../components/ProgressBar';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { getGoalMembers, sendInvitation } from '../lib/invitations'; // ← AJOUT
+import { getGoalMembers, sendInvitation } from '../lib/invitations';
 import type { Goal, Payment } from '../lib/database.types';
 
 function formatEur(amount: number): string {
@@ -22,7 +22,6 @@ function monthlyProgress(payments: Payment[]): number {
     .reduce((sum, p) => sum + p.amount, 0);
 }
 
-// Confettis
 const COLORS = ['#4d9eff', '#a78bfa', '#34d399', '#fbbf24', '#f472b6', '#ffffff'];
 
 function Confetti({ active }: { active: boolean }) {
@@ -74,7 +73,6 @@ function Confetti({ active }: { active: boolean }) {
   return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-50" />;
 }
 
-// Animation texte lettre par lettre
 function AnimatedText({ text, className }: { text: string; className?: string }) {
   const [displayed, setDisplayed] = useState('');
   useEffect(() => {
@@ -90,7 +88,6 @@ function AnimatedText({ text, className }: { text: string; className?: string })
   return <span className={className}>{displayed}</span>;
 }
 
-// Partenaires
 const PARTNERS = [
   {
     name: 'Skippair',
@@ -103,7 +100,6 @@ const PARTNERS = [
   { name: 'Sumeria Bank', desc: 'Compte rémunéré à 2% offert', emoji: '🏦', url: '#' },
 ];
 
-// Type membre
 type Member = {
   id: string;
   role: string;
@@ -127,7 +123,6 @@ export default function GoalDetail() {
   const [showForm, setShowForm] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
 
-  // ← AJOUT — états membres & invitation
   const [members, setMembers] = useState<Member[]>([]);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
@@ -160,10 +155,8 @@ export default function GoalDetail() {
     setGoal(goalData);
     setPayments(paymentsData ?? []);
 
-    // ← AJOUT — charger les membres
     const membersData = await getGoalMembers(id);
     setMembers(membersData);
-
     setLoading(false);
   };
 
@@ -191,7 +184,6 @@ export default function GoalDetail() {
     navigate('/dashboard');
   };
 
-  // ← AJOUT — envoyer une invitation
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!goal || !inviteEmail) return;
@@ -238,7 +230,6 @@ export default function GoalDetail() {
       <Confetti active={showConfetti} />
 
       <div className="max-w-4xl mx-auto">
-        {/* Back */}
         <button
           onClick={() => navigate('/dashboard')}
           className="flex items-center gap-1.5 text-gray-500 hover:text-gray-300 transition-colors text-xs mb-6"
@@ -247,11 +238,11 @@ export default function GoalDetail() {
           Tableau de bord
         </button>
 
-        {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div>
             <h1 className="text-xl font-bold text-white mb-0.5">{goal.name}</h1>
-            <p className="text-gray-500 text-xs">
+            <p className="text-gray-500 text-xs flex items-center gap-1">
+              <CalendarDays size={10} />
               Créé le {new Date(goal.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           </div>
@@ -263,17 +254,13 @@ export default function GoalDetail() {
           </button>
         </div>
 
-        {/* 2 colonnes si objectif atteint */}
         <div className={isCompleted ? 'grid grid-cols-1 md:grid-cols-2 gap-6' : ''}>
-
-          {/* Colonne gauche */}
           <div>
-            {/* Progress block */}
             <div className="bg-[#0d1117] border border-[#1c2230] rounded-2xl p-5 mb-4">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs text-gray-500">Progression globale</span>
-                <span className={`text-xs font-medium ${isCompleted ? 'text-emerald-400' : 'text-[#4d9eff]'}`}>
-                  {pct.toFixed(1)}%
+                <span className={`text-xs font-semibold ${isCompleted ? 'text-emerald-400' : 'text-[#4d9eff]'}`}>
+                  {pct.toFixed(1)} %
                 </span>
               </div>
               <ProgressBar current={goal.current_amount} target={goal.target_amount} className="mb-4" />
@@ -288,18 +275,21 @@ export default function GoalDetail() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 mb-0.5">Restant</p>
-                  <p className="text-white font-semibold text-sm">{formatEur(remaining)}</p>
+                  <p className={`font-semibold text-sm ${isCompleted ? 'text-emerald-400' : 'text-white'}`}>
+                    {isCompleted ? '✓ Atteint' : formatEur(remaining)}
+                  </p>
                 </div>
               </div>
             </div>
 
-            {/* ← AJOUT — Section Membres */}
             <div className="bg-[#0d1117] border border-[#1c2230] rounded-2xl p-5 mb-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
                   <Users size={13} className="text-[#4d9eff]" />
                   <span className="text-xs font-medium text-white">Membres</span>
-                  <span className="text-xs text-gray-500 bg-[#1c2230] px-1.5 py-0.5 rounded-md">{members.length}</span>
+                  <span className="text-xs text-gray-500 bg-[#1c2230] border border-[#2a3347] px-1.5 py-0.5 rounded-md">
+                    {members.length}
+                  </span>
                 </div>
                 {isOwner && (
                   <button
@@ -317,19 +307,19 @@ export default function GoalDetail() {
               ) : (
                 <div className="space-y-2">
                   {members.map((m) => (
-                    <div key={m.id} className="flex items-center justify-between">
+                    <div key={m.id} className="flex items-center justify-between py-1">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-7 h-7 rounded-full bg-[#1c2230] border border-[#2a3347] flex items-center justify-center text-xs text-gray-400">
+                        <div className="w-7 h-7 rounded-full bg-[#1c2230] border border-[#2a3347] flex items-center justify-center text-xs">
                           {m.user_id === user?.id ? '👤' : '👥'}
                         </div>
                         <span className="text-xs text-gray-300">
-                          {m.user_id === user?.id ? 'Vous' : `Membre`}
+                          {m.user_id === user?.id ? 'Vous' : 'Membre'}
                         </span>
                       </div>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${
                         m.role === 'owner'
-                          ? 'bg-[#4d9eff]/10 text-[#4d9eff]'
-                          : 'bg-[#1c2230] text-gray-500'
+                          ? 'bg-[#4d9eff]/10 text-[#4d9eff] border border-[#4d9eff]/20'
+                          : 'bg-[#1c2230] text-gray-500 border border-[#2a3347]'
                       }`}>
                         {m.role === 'owner' ? 'Créateur' : 'Membre'}
                       </span>
@@ -339,7 +329,6 @@ export default function GoalDetail() {
               )}
             </div>
 
-            {/* Monthly — masqué si terminé */}
             {!isCompleted && (
               <>
                 <div className="grid grid-cols-2 gap-3 mb-4">
@@ -423,7 +412,6 @@ export default function GoalDetail() {
               </>
             )}
 
-            {/* Historique */}
             <div>
               <h2 className="text-sm font-semibold text-white mb-3">Historique des versements</h2>
               {payments.length === 0 ? (
@@ -453,7 +441,6 @@ export default function GoalDetail() {
             </div>
           </div>
 
-          {/* Colonne droite — partenaires */}
           {isCompleted && (
             <div className="flex flex-col gap-4">
               <div className="bg-gradient-to-br from-[#0d2040] to-[#0d1117] border border-[#4d9eff]/30 rounded-2xl p-6 text-center">
@@ -470,11 +457,11 @@ export default function GoalDetail() {
 
               <div className="bg-[#0d1117] border border-[#1c2230] rounded-2xl p-5">
                 <p className="text-xs text-[#4d9eff] font-medium mb-4 uppercase tracking-wider">
-                  Offres exclusives partenaires :
+                  Offres exclusives partenaires
                 </p>
                 <div className="flex flex-col gap-3">
                   {PARTNERS.map((p) => (
-                    <a
+                    
                       key={p.name}
                       href={p.url}
                       target="_blank"
@@ -484,9 +471,9 @@ export default function GoalDetail() {
                       <div className="w-10 h-10 bg-[#0d2040] border border-[#1a3a6a] rounded-xl flex items-center justify-center text-xl flex-shrink-0">
                         {p.emoji}
                       </div>
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <p className="text-white text-xs font-semibold group-hover:text-[#4d9eff] transition-colors">{p.name}</p>
-                        <p className="text-gray-500 text-xs mt-0.5">{p.desc}</p>
+                        <p className="text-gray-500 text-xs mt-0.5 truncate">{p.desc}</p>
                       </div>
                       <ExternalLink size={12} className="text-gray-600 group-hover:text-[#4d9eff] transition-colors flex-shrink-0" />
                     </a>
@@ -503,12 +490,13 @@ export default function GoalDetail() {
         </div>
       </div>
 
-      {/* Delete confirm */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4">
           <div className="bg-[#0d1117] border border-[#1c2230] rounded-2xl p-6 max-w-sm w-full">
             <h3 className="text-white font-semibold mb-1.5">Supprimer cet objectif ?</h3>
-            <p className="text-gray-400 text-xs mb-5">Cette action est irréversible. Tous les versements associés seront perdus.</p>
+            <p className="text-gray-400 text-xs mb-5">
+              Cette action est irréversible. Tous les versements associés seront perdus.
+            </p>
             <div className="flex gap-2">
               <button onClick={handleDeleteGoal}
                 className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-medium py-2 rounded-lg transition-colors">
@@ -523,7 +511,6 @@ export default function GoalDetail() {
         </div>
       )}
 
-      {/* ← AJOUT — Modal invitation */}
       {showInviteModal && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4">
           <div className="bg-[#0d1117] border border-[#1c2230] rounded-2xl p-6 max-w-sm w-full">
@@ -563,7 +550,8 @@ export default function GoalDetail() {
                 )}
 
                 <p className="text-xs text-gray-600">
-                  La personne recevra une invitation à rejoindre l'objectif <span className="text-gray-400">"{goal.name}"</span>.
+                  La personne recevra une invitation à rejoindre{' '}
+                  <span className="text-gray-400">"{goal.name}"</span>.
                 </p>
 
                 <div className="flex gap-2 pt-1">
@@ -572,7 +560,7 @@ export default function GoalDetail() {
                     disabled={inviting || !inviteEmail}
                     className="flex-1 bg-[#4d9eff] hover:bg-[#6eb8ff] disabled:opacity-40 text-white text-xs font-medium py-2.5 rounded-lg transition-colors"
                   >
-                    {inviting ? 'Envoi...' : 'Envoyer l\'invitation'}
+                    {inviting ? 'Envoi...' : "Envoyer l'invitation"}
                   </button>
                   <button
                     type="button"
