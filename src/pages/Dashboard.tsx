@@ -7,7 +7,7 @@ import ReminderBanner from '../components/ReminderBanner';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { generateMonthlyReminders, getTodayReminders } from '../lib/reminders';
-import { getMyInvitations, acceptInvitation, rejectInvitation } from '../lib/invitations'; // ← AJOUT
+import { getMyInvitations, acceptInvitation, rejectInvitation } from '../lib/invitations';
 import type { Goal, Reminder } from '../lib/database.types';
 
 interface ReminderWithGoal {
@@ -15,7 +15,6 @@ interface ReminderWithGoal {
   goal: Goal | undefined;
 }
 
-// ← AJOUT — type invitation
 interface Invitation {
   id: string;
   status: string;
@@ -37,8 +36,6 @@ export default function Dashboard() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [reminders, setReminders] = useState<ReminderWithGoal[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // ← AJOUT — états invitations
   const [activeTab, setActiveTab] = useState<'dashboard' | 'invitations' | 'partners'>('dashboard');
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -48,7 +45,6 @@ export default function Dashboard() {
     loadData();
   }, [user]);
 
-  // ← AJOUT — sync onglet avec l'URL pour /partners
   useEffect(() => {
     if (location.pathname === '/partners') setActiveTab('partners');
     else setActiveTab('dashboard');
@@ -57,22 +53,36 @@ export default function Dashboard() {
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
-    const { data } = await supabase
-      .from('goals')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-    const goalList = data ?? [];
-    setGoals(goalList);
-    for (const goal of goalList) {
-      await generateMonthlyReminders(goal, user.id);
-    }
-    const todayReminders = await getTodayReminders(user.id, goalList);
-    setReminders(todayReminders);
 
-    // ← AJOUT — charger les invitations en attente
-    const invitationList = await getMyInvitations();
-    setInvitations(invitationList as Invitation[]);
+    try {
+      // Chargement des objectifs
+      const { data } = await supabase
+        .from('goals')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+      const goalList = data ?? [];
+      setGoals(goalList);
+
+      // Génération des rappels mensuels
+      for (const goal of goalList) {
+        await generateMonthlyReminders(goal, user.id);
+      }
+
+      // Rappels du jour
+      const todayReminders = await getTodayReminders(user.id, goalList);
+      setReminders(todayReminders);
+    } catch (err) {
+      console.error('Erreur chargement objectifs:', err);
+    }
+
+    // Chargement des invitations — séparé pour ne pas bloquer le reste
+    try {
+      const invitationList = await getMyInvitations();
+      setInvitations(invitationList as Invitation[]);
+    } catch {
+      setInvitations([]);
+    }
 
     setLoading(false);
   };
@@ -81,13 +91,12 @@ export default function Dashboard() {
     setReminders((prev) => prev.filter((r) => r.reminder.id !== reminderId));
   };
 
-  // ← AJOUT — accepter une invitation
   const handleAccept = async (invitationId: string) => {
     setProcessingId(invitationId);
     try {
       await acceptInvitation(invitationId);
       setInvitations((prev) => prev.filter((i) => i.id !== invitationId));
-      await loadData(); // recharge les goals pour inclure le nouveau
+      await loadData();
     } catch {
       // silencieux
     } finally {
@@ -95,7 +104,6 @@ export default function Dashboard() {
     }
   };
 
-  // ← AJOUT — refuser une invitation
   const handleReject = async (invitationId: string) => {
     setProcessingId(invitationId);
     try {
@@ -147,7 +155,6 @@ export default function Dashboard() {
             Tableau de bord
           </button>
 
-          {/* ← AJOUT — onglet Invitations avec badge */}
           <button
             onClick={() => setActiveTab('invitations')}
             className={`relative text-xs px-4 py-2 rounded-lg transition-colors font-medium ${
@@ -188,7 +195,7 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* ← AJOUT — Contenu onglet Invitations */}
+      {/* Onglet Invitations */}
       {activeTab === 'invitations' && (
         <div>
           <div className="mb-6">
@@ -209,10 +216,7 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-3">
               {invitations.map((inv) => (
-                <div
-                  key={inv.id}
-                  className="bg-[#0d1117] border border-[#1c2230] rounded-2xl p-5"
-                >
+                <div key={inv.id} className="bg-[#0d1117] border border-[#1c2230] rounded-2xl p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
@@ -233,7 +237,6 @@ export default function Dashboard() {
                         {' · '}Expire le {new Date(inv.expires_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })}
                       </p>
                     </div>
-
                     <div className="flex items-center gap-2 flex-shrink-0">
                       <button
                         onClick={() => handleReject(inv.id)}
@@ -260,7 +263,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Contenu onglet Tableau de bord */}
+      {/* Onglet Tableau de bord */}
       {activeTab === 'dashboard' && (
         <>
           <div className="mb-6">
