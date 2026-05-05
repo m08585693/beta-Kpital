@@ -1,10 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, Trash2, Clock, TrendingUp, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Clock, TrendingUp, ExternalLink, Users, UserPlus, X, Check } from 'lucide-react';
 import Layout from '../components/Layout';
 import ProgressBar from '../components/ProgressBar';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { getGoalMembers, sendInvitation } from '../lib/invitations'; // ← AJOUT
 import type { Goal, Payment } from '../lib/database.types';
 
 function formatEur(amount: number): string {
@@ -102,6 +103,14 @@ const PARTNERS = [
   { name: 'Sumeria Bank', desc: 'Compte rémunéré à 2% offert', emoji: '🏦', url: '#' },
 ];
 
+// Type membre
+type Member = {
+  id: string;
+  role: string;
+  joined_at: string;
+  user_id: string;
+};
+
 export default function GoalDetail() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -117,6 +126,15 @@ export default function GoalDetail() {
   const [adding, setAdding] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
+
+  // ← AJOUT — états membres & invitation
+  const [members, setMembers] = useState<Member[]>([]);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviting, setInviting] = useState(false);
+  const [inviteSuccess, setInviteSuccess] = useState(false);
+  const [inviteError, setInviteError] = useState('');
+  const isOwner = members.some((m) => m.user_id === user?.id && m.role === 'owner');
 
   const wasCompleted = useRef(false);
 
@@ -141,6 +159,11 @@ export default function GoalDetail() {
     wasCompleted.current = isNowComplete;
     setGoal(goalData);
     setPayments(paymentsData ?? []);
+
+    // ← AJOUT — charger les membres
+    const membersData = await getGoalMembers(id);
+    setMembers(membersData);
+
     setLoading(false);
   };
 
@@ -166,6 +189,27 @@ export default function GoalDetail() {
     if (!goal) return;
     await supabase.from('goals').delete().eq('id', goal.id);
     navigate('/dashboard');
+  };
+
+  // ← AJOUT — envoyer une invitation
+  const handleInvite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!goal || !inviteEmail) return;
+    setInviting(true);
+    setInviteError('');
+    try {
+      await sendInvitation(goal.id, inviteEmail.trim().toLowerCase());
+      setInviteSuccess(true);
+      setInviteEmail('');
+      setTimeout(() => {
+        setInviteSuccess(false);
+        setShowInviteModal(false);
+      }, 2000);
+    } catch (err: unknown) {
+      setInviteError(err instanceof Error ? err.message : 'Une erreur est survenue.');
+    } finally {
+      setInviting(false);
+    }
   };
 
   if (loading) {
@@ -247,6 +291,52 @@ export default function GoalDetail() {
                   <p className="text-white font-semibold text-sm">{formatEur(remaining)}</p>
                 </div>
               </div>
+            </div>
+
+            {/* ← AJOUT — Section Membres */}
+            <div className="bg-[#0d1117] border border-[#1c2230] rounded-2xl p-5 mb-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Users size={13} className="text-[#4d9eff]" />
+                  <span className="text-xs font-medium text-white">Membres</span>
+                  <span className="text-xs text-gray-500 bg-[#1c2230] px-1.5 py-0.5 rounded-md">{members.length}</span>
+                </div>
+                {isOwner && (
+                  <button
+                    onClick={() => { setShowInviteModal(true); setInviteError(''); setInviteSuccess(false); }}
+                    className="flex items-center gap-1 text-xs text-[#4d9eff] hover:text-[#6eb8ff] transition-colors"
+                  >
+                    <UserPlus size={12} />
+                    Inviter
+                  </button>
+                )}
+              </div>
+
+              {members.length === 0 ? (
+                <p className="text-xs text-gray-600 text-center py-3">Aucun membre pour l'instant.</p>
+              ) : (
+                <div className="space-y-2">
+                  {members.map((m) => (
+                    <div key={m.id} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-full bg-[#1c2230] border border-[#2a3347] flex items-center justify-center text-xs text-gray-400">
+                          {m.user_id === user?.id ? '👤' : '👥'}
+                        </div>
+                        <span className="text-xs text-gray-300">
+                          {m.user_id === user?.id ? 'Vous' : `Membre`}
+                        </span>
+                      </div>
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        m.role === 'owner'
+                          ? 'bg-[#4d9eff]/10 text-[#4d9eff]'
+                          : 'bg-[#1c2230] text-gray-500'
+                      }`}>
+                        {m.role === 'owner' ? 'Créateur' : 'Membre'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Monthly — masqué si terminé */}
@@ -429,6 +519,71 @@ export default function GoalDetail() {
                 Annuler
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ← AJOUT — Modal invitation */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+          <div className="bg-[#0d1117] border border-[#1c2230] rounded-2xl p-6 max-w-sm w-full">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <UserPlus size={14} className="text-[#4d9eff]" />
+                <h3 className="text-white font-semibold text-sm">Inviter un membre</h3>
+              </div>
+              <button onClick={() => setShowInviteModal(false)} className="text-gray-500 hover:text-gray-300 transition-colors">
+                <X size={14} />
+              </button>
+            </div>
+
+            {inviteSuccess ? (
+              <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs px-3 py-3 rounded-xl">
+                <Check size={13} />
+                Invitation envoyée avec succès !
+              </div>
+            ) : (
+              <form onSubmit={handleInvite} className="space-y-3">
+                <div>
+                  <label className="block text-xs text-gray-400 mb-1.5">Adresse email</label>
+                  <input
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    required
+                    placeholder="ami@email.com"
+                    className="w-full bg-[#1c2230] border border-[#2a3347] rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-[#4d9eff]/60 transition-colors"
+                  />
+                </div>
+
+                {inviteError && (
+                  <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs px-3 py-2 rounded-lg">
+                    {inviteError}
+                  </div>
+                )}
+
+                <p className="text-xs text-gray-600">
+                  La personne recevra une invitation à rejoindre l'objectif <span className="text-gray-400">"{goal.name}"</span>.
+                </p>
+
+                <div className="flex gap-2 pt-1">
+                  <button
+                    type="submit"
+                    disabled={inviting || !inviteEmail}
+                    className="flex-1 bg-[#4d9eff] hover:bg-[#6eb8ff] disabled:opacity-40 text-white text-xs font-medium py-2.5 rounded-lg transition-colors"
+                  >
+                    {inviting ? 'Envoi...' : 'Envoyer l\'invitation'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowInviteModal(false)}
+                    className="px-3 py-2 text-xs text-gray-400 hover:text-white border border-[#2a3347] rounded-lg transition-colors"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

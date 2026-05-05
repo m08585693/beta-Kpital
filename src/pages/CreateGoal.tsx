@@ -5,6 +5,7 @@ import Layout from '../components/Layout';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { generateWelcomeReminder } from '../lib/reminders';
+import { addOwnerToGoal } from '../lib/invitations'; // ← AJOUT
 
 function calcMonthlyAmount(target: number, targetDate: string): number {
   if (!target || !targetDate) return 0;
@@ -58,6 +59,8 @@ export default function CreateGoal() {
     } else {
       // ✅ Notification de bienvenue immédiate dès la création
       await generateWelcomeReminder(data, user.id);
+      // ✅ Enregistre le créateur comme owner du goal
+      await addOwnerToGoal(data.id); // ← AJOUT
       navigate('/dashboard');
     }
   };
