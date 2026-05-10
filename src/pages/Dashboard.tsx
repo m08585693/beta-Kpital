@@ -24,6 +24,7 @@ export default function Dashboard() {
   const [goals, setGoals] = useState<Goal[]>([]);
   const [reminders, setReminders] = useState<ReminderWithGoal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -33,7 +34,6 @@ export default function Dashboard() {
   const loadData = async () => {
     if (!user) return;
     setLoading(true);
-
     try {
       const { data } = await supabase
         .from('goals')
@@ -58,6 +58,13 @@ export default function Dashboard() {
 
   const handleDismissReminder = (reminderId: string) => {
     setReminders((prev) => prev.filter((r) => r.reminder.id !== reminderId));
+  };
+
+  const handleDeleteGoal = async (id: string) => {
+    await supabase.from('payments').delete().eq('goal_id', id);
+    await supabase.from('goals').delete().eq('id', id);
+    setGoals((prev) => prev.filter((g) => g.id !== id));
+    setDeleteConfirmId(null);
   };
 
   const totalSaved = goals.reduce((sum, g) => sum + g.current_amount, 0);
@@ -145,8 +152,38 @@ export default function Dashboard() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {goals.map((goal) => (
-            <GoalCard key={goal.id} goal={goal} />
+            <GoalCard
+              key={goal.id}
+              goal={goal}
+              onDelete={(id) => setDeleteConfirmId(id)}
+            />
           ))}
+        </div>
+      )}
+
+      {/* Modal confirmation suppression */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+          <div className="bg-[#0d1117] border border-[#1c2230] rounded-2xl p-6 max-w-sm w-full">
+            <h3 className="text-white font-semibold mb-1.5">Supprimer cet objectif ?</h3>
+            <p className="text-gray-400 text-xs mb-5">
+              Cette action est irréversible. Tous les versements associés seront perdus.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleDeleteGoal(deleteConfirmId)}
+                className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-medium py-2 rounded-lg transition-colors"
+              >
+                Supprimer
+              </button>
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                className="flex-1 bg-[#1c2230] hover:bg-[#2a3347] text-gray-300 text-xs font-medium py-2 rounded-lg transition-colors"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </Layout>
