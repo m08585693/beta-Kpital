@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, LayoutDashboard, PlusCircle, Users, Bell } from 'lucide-react';
+import { LogOut, LayoutDashboard, PlusCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import type { ReactNode } from 'react';
 
@@ -22,7 +22,7 @@ export default function Layout({ children }: LayoutProps) {
       <header className="border-b border-[#1c2230] sticky top-0 z-50 bg-[#080c12]/95 backdrop-blur-sm">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/')}
             className="text-white font-bold text-base tracking-tight hover:text-[#4d9eff] transition-colors"
           >
             Kpital
@@ -38,28 +38,6 @@ export default function Layout({ children }: LayoutProps) {
             >
               <LayoutDashboard size={13} />
               <span className="hidden sm:inline">Tableau de bord</span>
-            </button>
-            <button
-              onClick={() => navigate('/invitations')}
-              className={`flex items-center gap-1.5 text-xs transition-colors px-3 py-1.5 rounded-lg ${
-                location.pathname === '/invitations'
-                  ? 'text-[#4d9eff] bg-[#4d9eff]/10'
-                  : 'text-gray-400 hover:text-white hover:bg-[#1c2230]'
-              }`}
-            >
-              <Bell size={13} />
-              <span className="hidden sm:inline">Invitations</span>
-            </button>
-            <button
-              onClick={() => navigate('/partners')}
-              className={`flex items-center gap-1.5 text-xs transition-colors px-3 py-1.5 rounded-lg ${
-                location.pathname === '/partners'
-                  ? 'text-[#4d9eff] bg-[#4d9eff]/10'
-                  : 'text-gray-400 hover:text-white hover:bg-[#1c2230]'
-              }`}
-            >
-              <Users size={13} />
-              <span className="hidden sm:inline">Nos partenaires</span>
             </button>
             <button
               onClick={() => navigate('/goals/new')}
