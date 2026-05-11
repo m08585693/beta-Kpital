@@ -1,8 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
 import { TrendingUp, Shield, Bell, ChevronRight, Target, Wallet, BarChart3 } from 'lucide-react';
-import ScrollAnimation from '../components/ScrollAnimation';
 
 function useInView(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
@@ -18,31 +16,7 @@ function useInView(threshold = 0.15) {
   return { ref, inView };
 }
 
-function IlluminatedText({ text, inView, className = '', delay = 0 }: {
-  text: string; inView: boolean; className?: string; delay?: number;
-}) {
-  const words = text.split(' ');
-  return (
-    <span className={className}>
-      {words.map((word, i) => (
-        <span
-          key={i}
-          className="inline-block transition-all duration-500"
-          style={{
-            color: inView ? '#e8edf5' : '#2a3347',
-            transitionDelay: inView ? `${delay + i * 60}ms` : '0ms',
-          }}
-        >
-          {word}{i < words.length - 1 ? '\u00A0' : ''}
-        </span>
-      ))}
-    </span>
-  );
-}
-
-function AnimatedSection({ children, className = '', delay = 0 }: {
-  children: React.ReactNode; className?: string; delay?: number;
-}) {
+function AnimatedSection({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   const { ref, inView } = useInView();
   return (
     <div
@@ -51,10 +25,57 @@ function AnimatedSection({ children, className = '', delay = 0 }: {
       style={{
         opacity: inView ? 1 : 0,
         transform: inView ? 'translateY(0)' : 'translateY(24px)',
-        transition: `opacity 0.6s ease ${delay}ms, transform 0.6s ease ${delay}ms`,
+        transition: 'opacity 0.6s ease, transform 0.6s ease',
       }}
     >
       {children}
+    </div>
+  );
+}
+
+function FloatingBill() {
+  const billRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!billRef.current || !containerRef.current) return;
+      const scrollY = window.scrollY;
+      const maxScroll = 2000;
+      const progress = Math.min(scrollY / maxScroll, 1);
+
+      billRef.current.style.opacity = String(0.12 * (1 - progress));
+      billRef.current.style.transform = `
+        translateY(${progress * 400}px)
+        rotate(${-8 + progress * 20}deg)
+      `;
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  return (
+    <div
+      ref={containerRef}
+      className="fixed inset-0 pointer-events-none z-0 overflow-hidden flex items-center justify-center"
+    >
+      <img
+        ref={billRef}
+        src="/dollar.png"
+        alt=""
+        className="w-[900px] max-w-none select-none"
+        style={{
+          animation: 'floatingBill 6s ease-in-out infinite',
+          opacity: 0.12,
+        }}
+      />
+      <style>{`
+        @keyframes floatingBill {
+          0%, 100% { transform: translateY(0) rotate(-8deg); }
+          50% { transform: translateY(-20px) rotate(-4deg); }
+        }
+      `}</style>
     </div>
   );
 }
@@ -74,68 +95,17 @@ const goals = [
   { name: "Fonds d'urgence", pct: 91, current: '2 730', target: '3 000', color: '#56e39f' },
 ];
 
-function AnimatedBar({ pct, color, inView, delay }: { pct: number; color: string; inView: boolean; delay: number }) {
-  return (
-    <div className="h-1.5 bg-[#1c2230] rounded-full overflow-hidden">
-      <div
-        className="h-full rounded-full transition-all duration-1000"
-        style={{
-          width: inView ? `${pct}%` : '0%',
-          background: `linear-gradient(90deg, ${color}, #6eb8ff)`,
-          transitionDelay: `${delay}ms`,
-        }}
-      />
-    </div>
-  );
-}
-
-// Billet flottant en arrière-plan
-function FloatingBill() {
-  const { scrollY } = useScroll();
-  const y = useTransform(scrollY, [0, 3000], [0, 600]);
-  const rotate = useTransform(scrollY, [0, 3000], [-8, 15]);
-  const opacity = useTransform(scrollY, [0, 2000, 3000], [0.12, 0.08, 0]);
-
-  return (
-    <motion.div
-      className="fixed inset-0 pointer-events-none z-0 flex items-center justify-center overflow-hidden"
-      style={{ opacity }}
-    >
-      <motion.img
-        src="/dollar.png"
-        alt=""
-        className="w-[900px] max-w-none select-none"
-        style={{ y, rotate }}
-        animate={{
-          rotate: [-8, -4, -8],
-          y: [0, -20, 0],
-          x: [-10, 10, -10],
-        }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-      />
-    </motion.div>
-  );
-}
-
 export default function Landing() {
   const navigate = useNavigate();
-
   const [heroVisible, setHeroVisible] = useState(false);
-  useEffect(() => { setTimeout(() => setHeroVisible(true), 100); }, []);
 
-  const { ref: dashRef, inView: dashInView } = useInView(0.2);
-  const { ref: featRef, inView: featInView } = useInView(0.1);
-  const { ref: stepsRef, inView: stepsInView } = useInView(0.1);
-  const { ref: ctaRef, inView: ctaInView } = useInView(0.2);
+  useEffect(() => {
+    setTimeout(() => setHeroVisible(true), 100);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#080c12] text-white overflow-x-hidden">
-
-      {/* Billet flottant arrière-plan */}
+      {/* Billet flottant en arrière-plan */}
       <FloatingBill />
 
       {/* Header */}
@@ -144,14 +114,18 @@ export default function Landing() {
         style={{ opacity: heroVisible ? 1 : 0, transition: 'opacity 0.5s ease' }}
       >
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <span className="font-bold text-base tracking-tight text-white">Kpital</span>
+          <span className="font-bold text-base tracking-tight">Kpital</span>
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate('/auth')}
-              className="text-xs text-gray-400 hover:text-white transition-colors px-3 py-1.5">
+            <button
+              onClick={() => navigate('/auth')}
+              className="text-xs text-gray-400 hover:text-white transition-colors px-3 py-1.5"
+            >
               Connexion
             </button>
-            <button onClick={() => navigate('/auth?mode=signup')}
-              className="text-xs bg-[#4d9eff] hover:bg-[#6eb8ff] text-white font-medium px-4 py-1.5 rounded-lg transition-colors">
+            <button
+              onClick={() => navigate('/auth?mode=signup')}
+              className="text-xs bg-[#4d9eff] hover:bg-[#6eb8ff] text-white font-medium px-4 py-1.5 rounded-lg transition-colors"
+            >
               S'inscrire
             </button>
           </div>
@@ -169,8 +143,9 @@ export default function Landing() {
             style={{ opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'translateY(0)' : 'translateY(12px)', transition: 'all 0.6s ease 0ms' }}
           >
             <span className="w-1.5 h-1.5 bg-[#4d9eff] rounded-full animate-pulse" />
-            Beta — Épargne progressive
+            Épargne progressive
           </div>
+
           <h1
             className="text-4xl sm:text-5xl font-bold leading-tight mb-5 tracking-tight"
             style={{ opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.7s ease 150ms' }}
@@ -178,6 +153,7 @@ export default function Landing() {
             Atteignez vos projets<br />
             <span className="text-[#4d9eff]">un petit pas à la fois</span>
           </h1>
+
           <p
             className="text-gray-400 text-sm sm:text-base leading-relaxed max-w-xl mx-auto mb-10"
             style={{ opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.7s ease 300ms' }}
@@ -185,6 +161,7 @@ export default function Landing() {
             Kpital vous aide à épargner pour ce qui compte vraiment. Des rappels intelligents vous guident
             tout au long du mois pour atteindre votre objectif sans effort.
           </p>
+
           <div
             className="flex flex-col sm:flex-row items-center justify-center gap-3"
             style={{ opacity: heroVisible ? 1 : 0, transform: heroVisible ? 'translateY(0)' : 'translateY(20px)', transition: 'all 0.7s ease 450ms' }}
@@ -196,8 +173,10 @@ export default function Landing() {
               Commencer gratuitement
               <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
             </button>
-            <button onClick={() => navigate('/auth')}
-              className="text-sm text-gray-500 hover:text-white transition-colors px-4 py-3">
+            <button
+              onClick={() => navigate('/auth')}
+              className="text-sm text-gray-400 hover:text-white transition-colors px-4 py-3"
+            >
               J'ai déjà un compte
             </button>
           </div>
@@ -205,97 +184,32 @@ export default function Landing() {
       </section>
 
       {/* Dashboard preview */}
-      <section className="px-6 pb-20 z-10 relative">
-        <div
-          ref={dashRef}
-          className="max-w-2xl mx-auto"
-          style={{
-            opacity: dashInView ? 1 : 0,
-            transform: dashInView ? 'translateY(0) scale(1)' : 'translateY(32px) scale(0.97)',
-            transition: 'all 0.8s ease',
-          }}
-        >
+      <section className="px-6 pb-16">
+        <div className="max-w-2xl mx-auto">
           <div className="bg-[#0d1117] border border-[#1c2230] rounded-2xl p-5 shadow-2xl">
-            <div className="flex items-center justify-between mb-5">
-              <p className="text-xs text-gray-500 font-medium">Aperçu du tableau de bord</p>
-              <div className="flex gap-1.5">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs text-gray-500">Tableau de bord</p>
+              <div className="flex gap-1">
                 <div className="w-2 h-2 rounded-full bg-[#1c2230]" />
                 <div className="w-2 h-2 rounded-full bg-[#1c2230]" />
                 <div className="w-2 h-2 rounded-full bg-[#4d9eff]/40" />
               </div>
             </div>
-            {goals.map((item, i) => (
-              <div key={item.name} className="mb-5 last:mb-0">
-                <div className="flex justify-between mb-1">
-                  <span className="text-xs text-gray-300 font-medium">{item.name}</span>
-                  <span className="text-xs font-medium" style={{ color: item.color }}>{item.pct}%</span>
+            {goals.map((item) => (
+              <div key={item.name} className="mb-4 last:mb-0">
+                <div className="flex justify-between mb-1.5">
+                  <span className="text-xs text-gray-300">{item.name}</span>
+                  <span className="text-xs text-gray-500">{item.pct}%</span>
                 </div>
-                <div className="flex justify-between text-xs text-gray-600 mb-1.5">
+                <div className="flex justify-between text-xs text-gray-600 mb-1">
                   <span>{item.current} €</span>
                   <span>{item.target} €</span>
                 </div>
-                <AnimatedBar pct={item.pct} color={item.color} inView={dashInView} delay={i * 200} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Phrase illuminée */}
-      <section className="px-6 pb-24 z-10 relative">
-        <div className="max-w-3xl mx-auto text-center">
-          {(() => {
-            const { ref, inView } = useInView(0.3);
-            return (
-              <div ref={ref}>
-                <p className="text-2xl sm:text-3xl font-semibold leading-relaxed tracking-tight">
-                  <IlluminatedText text="Chaque grand projet commence" inView={inView} delay={0} />
-                  {' '}
-                  <IlluminatedText text="par un premier versement." inView={inView} delay={300} className="text-[#4d9eff]" />
-                </p>
-              </div>
-            );
-          })()}
-        </div>
-      </section>
-
-      {/* Animation scroll */}
-      <section className="px-6 pb-24 z-10 relative">
-        <div className="max-w-2xl mx-auto">
-          <AnimatedSection className="text-center mb-8">
-            <p className="text-xs text-[#4d9eff] font-medium uppercase tracking-widest mb-3">Visualisez votre épargne</p>
-            <h2 className="text-2xl font-bold">Chaque versement compte</h2>
-          </AnimatedSection>
-          <ScrollAnimation />
-        </div>
-      </section>
-
-      {/* Comment ça marche */}
-      <section className="px-6 pb-24 z-10 relative">
-        <div className="max-w-3xl mx-auto">
-          <AnimatedSection className="text-center mb-12">
-            <p className="text-xs text-[#4d9eff] font-medium uppercase tracking-widest mb-3">Comment ça marche</p>
-            <h2 className="text-2xl font-bold">En 3 étapes, c'est lancé</h2>
-          </AnimatedSection>
-          <div ref={stepsRef} className="flex flex-col gap-0">
-            {[
-              { num: '01', title: 'Créez votre objectif', desc: "Donnez un nom à votre projet, entrez le montant cible et la date souhaitée. Kpital calcule automatiquement votre mensualité." },
-              { num: '02', title: 'Recevez vos rappels', desc: "Tout au long du mois, des rappels intelligents vous invitent à mettre de côté de petites sommes. Jamais trop, jamais trop tard." },
-              { num: '03', title: 'Atteignez votre but', desc: "Dès l'objectif atteint, accédez à des offres exclusives de nos partenaires pour concrétiser votre projet." },
-            ].map((step, i) => (
-              <div
-                key={step.num}
-                className="flex gap-6 py-8 border-b border-[#1c2230] last:border-none"
-                style={{
-                  opacity: stepsInView ? 1 : 0,
-                  transform: stepsInView ? 'translateX(0)' : 'translateX(-20px)',
-                  transition: `all 0.6s ease ${i * 150}ms`,
-                }}
-              >
-                <div className="text-2xl font-bold text-[#1c2230] w-10 flex-shrink-0 pt-0.5">{step.num}</div>
-                <div>
-                  <h3 className="text-sm font-semibold text-white mb-1.5">{step.title}</h3>
-                  <p className="text-xs text-gray-500 leading-relaxed">{step.desc}</p>
+                <div className="h-1.5 bg-[#1c2230] rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${item.pct}%`, background: `linear-gradient(90deg, ${item.color}, #6eb8ff)` }}
+                  />
                 </div>
               </div>
             ))}
@@ -304,66 +218,46 @@ export default function Landing() {
       </section>
 
       {/* Features */}
-      <section className="px-6 pb-24 z-10 relative">
+      <section className="px-6 pb-20">
         <div className="max-w-4xl mx-auto">
-          <AnimatedSection className="text-center mb-10">
-            <p className="text-xs text-[#4d9eff] font-medium uppercase tracking-widest mb-3">Fonctionnalités</p>
+          <div className="text-center mb-10">
             <h2 className="text-2xl font-bold mb-2">Tout ce dont vous avez besoin</h2>
-            <p className="text-gray-500 text-sm">Simple, efficace, sans friction.</p>
-          </AnimatedSection>
-          <div ref={featRef} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <p className="text-gray-400 text-sm">Simple, efficace, sans friction.</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {features.map((f, i) => (
-              <div
-                key={f.title}
-                className="bg-[#0d1117] border border-[#1c2230] rounded-xl p-5 hover:border-[#4d9eff]/30 transition-all hover:-translate-y-0.5"
-                style={{
-                  opacity: featInView ? 1 : 0,
-                  transform: featInView ? 'translateY(0)' : 'translateY(20px)',
-                  transition: `all 0.5s ease ${i * 80}ms`,
-                }}
-              >
-                <div className="w-8 h-8 bg-[#4d9eff]/10 rounded-lg flex items-center justify-center mb-3">
-                  <f.icon size={15} className="text-[#4d9eff]" />
+              <AnimatedSection key={f.title}>
+                <div className="bg-[#0d1117] border border-[#1c2230] rounded-xl p-5 hover:border-[#4d9eff]/30 transition-colors h-full">
+                  <div className="w-8 h-8 bg-[#4d9eff]/10 rounded-lg flex items-center justify-center mb-3">
+                    <f.icon size={15} className="text-[#4d9eff]" />
+                  </div>
+                  <h3 className="text-sm font-semibold text-white mb-1">{f.title}</h3>
+                  <p className="text-xs text-gray-500 leading-relaxed">{f.desc}</p>
                 </div>
-                <h3 className="text-sm font-semibold text-white mb-1">{f.title}</h3>
-                <p className="text-xs text-gray-500 leading-relaxed">{f.desc}</p>
-              </div>
+              </AnimatedSection>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA final */}
-      <section className="px-6 pb-24 z-10 relative">
-        <div
-          ref={ctaRef}
-          className="max-w-2xl mx-auto text-center bg-gradient-to-b from-[#0d1a30] to-[#0d1117] border border-[#4d9eff]/20 rounded-2xl p-12"
-          style={{
-            opacity: ctaInView ? 1 : 0,
-            transform: ctaInView ? 'translateY(0)' : 'translateY(24px)',
-            transition: 'all 0.7s ease',
-          }}
-        >
-          <div className="inline-flex items-center gap-2 bg-[#4d9eff]/10 border border-[#4d9eff]/20 text-[#4d9eff] text-xs px-3 py-1 rounded-full mb-6">
-            <span className="w-1.5 h-1.5 bg-[#4d9eff] rounded-full animate-pulse" />
-            Accès beta gratuit
-          </div>
+      {/* CTA */}
+      <section className="px-6 pb-20">
+        <div className="max-w-2xl mx-auto text-center bg-gradient-to-b from-[#0d1a30] to-[#0d1117] border border-[#4d9eff]/20 rounded-2xl p-10">
           <h2 className="text-2xl font-bold mb-3">Prêt à commencer ?</h2>
-          <p className="text-gray-400 text-sm mb-8 leading-relaxed">
-            Rejoignez Kpital et transformez vos projets en réalité,<br />un versement à la fois.
+          <p className="text-gray-400 text-sm mb-6">
+            Rejoignez Kpital et transformez vos projets en réalité, un versement à la fois.
           </p>
           <button
             onClick={() => navigate('/auth?mode=signup')}
-            className="inline-flex items-center gap-2 bg-[#4d9eff] hover:bg-[#6eb8ff] text-white font-medium text-sm px-8 py-3.5 rounded-xl transition-all hover:shadow-[0_0_40px_rgba(77,158,255,0.3)] group"
+            className="inline-flex items-center gap-2 bg-[#4d9eff] hover:bg-[#6eb8ff] text-white font-medium text-sm px-6 py-3 rounded-xl transition-all hover:shadow-[0_0_30px_rgba(77,158,255,0.3)]"
           >
             Créer mon compte gratuitement
-            <ChevronRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
           </button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-[#1c2230] px-6 py-6 z-10 relative">
+      <footer className="border-t border-[#1c2230] px-6 py-6">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <span className="text-xs text-gray-600 font-bold">Kpital</span>
           <span className="text-xs text-gray-600">© 2026 — Épargne progressive</span>
