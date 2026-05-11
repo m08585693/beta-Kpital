@@ -44,10 +44,10 @@ function FloatingBill() {
       const maxScroll = 2000;
       const progress = Math.min(scrollY / maxScroll, 1);
 
-      billRef.current.style.opacity = String(0.12 * (1 - progress));
+      billRef.current.style.opacity = String(0.1 * (1 - progress));
       billRef.current.style.transform = `
         translateY(${progress * 400}px)
-        rotate(${-8 + progress * 20}deg)
+        rotate(${-12 + progress * 25}deg)
       `;
     };
 
@@ -64,16 +64,20 @@ function FloatingBill() {
         ref={billRef}
         src="/dollar.png"
         alt=""
-        className="w-[900px] max-w-none select-none"
+        className="w-[900px] max-w-none select-none will-change-transform"
         style={{
-          animation: 'floatingBill 6s ease-in-out infinite',
-          opacity: 0.12,
+          animation: 'floatingBill 8s cubic-bezier(0.4, 0.0, 0.2, 1) infinite',
+          opacity: 0.1,
+          filter: 'drop-shadow(0 0 30px rgba(77, 158, 255, 0.15))',
         }}
       />
       <style>{`
         @keyframes floatingBill {
-          0%, 100% { transform: translateY(0) rotate(-8deg); }
-          50% { transform: translateY(-20px) rotate(-4deg); }
+          0% { transform: translateY(0) rotateZ(-12deg) translateX(0); }
+          25% { transform: translateY(-30px) rotateZ(-8deg) translateX(15px); }
+          50% { transform: translateY(-45px) rotateZ(0deg) translateX(0); }
+          75% { transform: translateY(-30px) rotateZ(-8deg) translateX(-15px); }
+          100% { transform: translateY(0) rotateZ(-12deg) translateX(0); }
         }
       `}</style>
     </div>
