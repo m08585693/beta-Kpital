@@ -2,7 +2,7 @@ import { motion } from 'framer-motion';
 import { useRef, useState, useEffect } from 'react';
 
 interface Props {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
 }
 
