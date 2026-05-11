@@ -16,6 +16,16 @@ export interface Database {
         Insert: ReminderInsert;
         Update: Partial<ReminderInsert>;
       };
+      goal_members: {
+        Row: GoalMember;
+        Insert: GoalMemberInsert;
+        Update: Partial<GoalMemberInsert>;
+      };
+      goal_invitations: {
+        Row: GoalInvitation;
+        Insert: GoalInvitationInsert;
+        Update: Partial<GoalInvitationInsert>;
+      };
     };
   };
 }
@@ -76,4 +86,35 @@ export interface ReminderInsert {
   year: number;
   amount_suggested: number;
   is_sent?: boolean;
+}
+
+export interface GoalMember {
+  id: string;
+  goal_id: string;
+  user_id: string;
+  role: 'owner' | 'member';
+  joined_at: string;
+}
+
+export interface GoalMemberInsert {
+  goal_id: string;
+  user_id: string;
+  role: 'owner' | 'member';
+}
+
+export interface GoalInvitation {
+  id: string;
+  goal_id: string;
+  invited_email: string;
+  invited_by: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  created_at: string;
+  expires_at: string | null;
+}
+
+export interface GoalInvitationInsert {
+  goal_id: string;
+  invited_email: string;
+  invited_by: string;
+  status?: 'pending' | 'accepted' | 'rejected';
 }
