@@ -17,7 +17,7 @@ interface Invitation {
   created_at: string;
   expires_at: string;
   goal_id: string;
-  goals: { title?: string; target_amount?: number; monthly_amount?: number } | null;
+  goals: { name?: string; target_amount?: number; monthly_amount?: number } | null;
   invited_by: string;
 }
 
@@ -130,7 +130,7 @@ export default function Invitations() {
             >
               <option value="">Choisir un objectif…</option>
               {goals.map((g) => (
-                <option key={g.id} value={g.id}>{g.title}</option>
+                <option key={g.id} value={g.id}>{g.name}</option>
               ))}
             </select>
             <ChevronDown size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
@@ -192,7 +192,7 @@ export default function Invitations() {
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <span className="text-white font-semibold text-sm">
-                      {inv.goals?.title ?? 'Objectif partagé'}
+                      {inv.goals?.name ?? 'Objectif partagé'}
                     </span>
                     {inv.goals?.target_amount && (
                       <p className="text-xs text-gray-500 mt-1">

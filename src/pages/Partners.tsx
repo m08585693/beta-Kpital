@@ -1,6 +1,6 @@
 import Layout from '../components/Layout';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { PlusCircle, ExternalLink, Sparkles } from 'lucide-react';
+import { PlusCircle, ExternalLink, Sparkles, Bell } from 'lucide-react';
 import { useState } from 'react';
 
 const partners = [
@@ -105,6 +105,17 @@ export default function Partners() {
             }`}
           >
             Nos partenaires
+          </button>
+          <button
+            onClick={() => navigate('/invitations')}
+            className={`text-xs px-4 py-2 rounded-lg transition-colors font-medium ${
+              location.pathname === '/invitations'
+                ? 'bg-[#4d9eff]/10 text-[#4d9eff]'
+                : 'text-gray-500 hover:text-white'
+            }`}
+          >
+            <Bell size={11} className="inline mr-1" />
+            Invitations
           </button>
         </div>
         <button

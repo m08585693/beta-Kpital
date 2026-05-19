@@ -53,7 +53,7 @@ export async function getMyInvitations() {
       created_at,
       expires_at,
       goal_id,
-      goals (title, target_amount, monthly_amount),
+      goals (name, target_amount, monthly_amount),
       invited_by
     `)
     .eq('invited_email', user.email)

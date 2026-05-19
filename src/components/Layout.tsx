@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LogOut, LayoutDashboard, PlusCircle } from 'lucide-react';
+import { LogOut, LayoutDashboard, PlusCircle, Users } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import type { ReactNode } from 'react';
 
@@ -45,6 +45,13 @@ export default function Layout({ children }: LayoutProps) {
             >
               <PlusCircle size={13} />
               <span className="hidden sm:inline">Nouvel objectif</span>
+            </button>
+            <button
+              onClick={() => navigate('/invitations')}
+              className="flex items-center gap-1.5 text-xs bg-[#1c2230] hover:bg-[#2a3347] text-gray-300 hover:text-white transition-colors px-3 py-1.5 rounded-lg"
+            >
+              <Users size={13} />
+              <span className="hidden sm:inline">Projets partagés</span>
             </button>
             <div className="w-px h-5 bg-[#1c2230] mx-1" />
             <span className="text-xs text-gray-500 hidden sm:inline truncate max-w-[120px]">{user?.email}</span>
