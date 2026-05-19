@@ -83,7 +83,7 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      {reminders.map(({ reminder, goal }) => (
+      {reminders.slice(0, 1).map(({ reminder, goal }) => (
         <ReminderBanner
           key={reminder.id}
           reminder={reminder}
