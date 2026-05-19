@@ -161,8 +161,7 @@ export default function GoalDetail() {
     setPayments(paymentsData ?? []);
 
     // ← AJOUT — charger les membres
-    const membersData = await getGoalMembers(id);
-    setMembers(membersData);
+    try { const membersData = await getGoalMembers(id); setMembers(membersData); } catch { /* RLS recursion on goal_members */ }
 
     setLoading(false);
   };

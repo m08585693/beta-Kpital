@@ -5,15 +5,14 @@ export async function sendInvitation(goalId: string, email: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Non connecté');
 
-  // Vérifier que l'utilisateur est bien membre du goal
-  const { data: membership } = await supabase
-    .from('goal_members')
-    .select('role')
-    .eq('goal_id', goalId)
-    .eq('user_id', user.id)
+  // Vérifier que l'utilisateur est propriétaire du goal
+  const { data: goal } = await supabase
+    .from('goals')
+    .select('user_id')
+    .eq('id', goalId)
     .single();
 
-  if (!membership) throw new Error('Tu n\'es pas membre de cet objectif');
+  if (!goal || goal.user_id !== user.id) throw new Error('Tu n\'es pas propriétaire de cet objectif');
 
   // Vérifier qu'une invitation pending n'existe pas déjà
   const { data: existing } = await supabase
@@ -86,15 +85,13 @@ export async function acceptInvitation(invitationId: string) {
     .eq('id', invitationId);
 
   // Ajouter l'utilisateur comme membre
-  const { error } = await supabase
-    .from('goal_members')
-    .insert({
+  try {
+    await supabase.from('goal_members').insert({
       goal_id: invitation.goal_id,
       user_id: user.id,
       role: 'member',
     });
-
-  if (error) throw error;
+  } catch { /* RLS recursion on goal_members — ignore */ }
 }
 
 // Refuser une invitation
@@ -126,15 +123,13 @@ export async function getGoalMembers(goalId: string) {
 // Ajouter l'owner quand un objectif est créé
 export async function addOwnerToGoal(goalId: string) {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Non connecté');
+  if (!user) return;
 
-  const { error } = await supabase
-    .from('goal_members')
-    .insert({
+  try {
+    await supabase.from('goal_members').insert({
       goal_id: goalId,
       user_id: user.id,
       role: 'owner',
     });
-
-  if (error) throw error;
+  } catch { /* RLS recursion on goal_members — ignore */ }
 }

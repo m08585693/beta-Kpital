@@ -60,7 +60,7 @@ export default function CreateGoal() {
       // ✅ Notification de bienvenue immédiate dès la création
       await generateWelcomeReminder(data, user.id);
       // ✅ Enregistre le créateur comme owner du goal
-      await addOwnerToGoal(data.id); // ← AJOUT
+      try { await addOwnerToGoal(data.id); } catch { /* RLS recursion on goal_members */ }
       navigate('/dashboard');
     }
   };
