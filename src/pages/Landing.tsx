@@ -33,57 +33,6 @@ function AnimatedSection({ children, className = '' }: { children: React.ReactNo
   );
 }
 
-function FloatingBill() {
-  const billRef = useRef<HTMLImageElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!billRef.current || !containerRef.current) return;
-      const scrollY = window.scrollY;
-      const maxScroll = 2000;
-      const progress = Math.min(scrollY / maxScroll, 1);
-
-      billRef.current.style.opacity = String(0.1 * (1 - progress));
-      billRef.current.style.transform = `
-        translateY(${progress * 400}px)
-        rotate(${-12 + progress * 25}deg)
-      `;
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  return (
-    <div
-      ref={containerRef}
-      className="fixed inset-0 pointer-events-none z-0 overflow-hidden flex items-center justify-center"
-    >
-      <img
-        ref={billRef}
-        src="/dollar.png"
-        alt=""
-        className="w-[900px] max-w-none select-none will-change-transform"
-        style={{
-          animation: 'floatingBill 8s cubic-bezier(0.4, 0.0, 0.2, 1) infinite',
-          opacity: 0.1,
-          filter: 'drop-shadow(0 0 30px rgba(77, 158, 255, 0.15))',
-        }}
-      />
-      <style>{`
-        @keyframes floatingBill {
-          0% { transform: translateY(0) rotateZ(-12deg) translateX(0); }
-          25% { transform: translateY(-30px) rotateZ(-8deg) translateX(15px); }
-          50% { transform: translateY(-45px) rotateZ(0deg) translateX(0); }
-          75% { transform: translateY(-30px) rotateZ(-8deg) translateX(-15px); }
-          100% { transform: translateY(0) rotateZ(-12deg) translateX(0); }
-        }
-      `}</style>
-    </div>
-  );
-}
-
 const features = [
   { icon: Target, title: 'Objectifs clairs', desc: 'Définissez votre projet, votre montant et votre date. Kpital calcule votre mensualité automatiquement.' },
   { icon: Bell, title: 'Rappels intelligents', desc: 'Des rappels espacés tout au long du mois pour vous aider à atteindre votre objectif en douceur.' },
@@ -109,9 +58,6 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-[#080c12] text-white overflow-x-hidden">
-      {/* Billet flottant en arrière-plan */}
-      <FloatingBill />
-
       {/* Header */}
       <header
         className="border-b border-[#1c2230]/50 sticky top-0 z-50 bg-[#080c12]/95 backdrop-blur-sm"
@@ -229,7 +175,7 @@ export default function Landing() {
             <p className="text-gray-400 text-sm">Simple, efficace, sans friction.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {features.map((f, i) => (
+            {features.map((f) => (
               <AnimatedSection key={f.title}>
                 <div className="bg-[#0d1117] border border-[#1c2230] rounded-xl p-5 hover:border-[#4d9eff]/30 transition-colors h-full">
                   <div className="w-8 h-8 bg-[#4d9eff]/10 rounded-lg flex items-center justify-center mb-3">
